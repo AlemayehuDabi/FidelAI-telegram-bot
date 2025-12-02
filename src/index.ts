@@ -1,10 +1,10 @@
 process.env.NODE_OPTIONS = "--dns-result-order=ipv4first"; 
 import { bot } from "./bot";
-import { setupStartUi } from "./ui/message";
+import { setupStartUI } from "./ui/message";
 
 
 const bootStrap = async() => {
-    setupStartUi(bot)
+    setupStartUI(bot)
     bot.launch()
     console.log("🚀 Fidel UI Bot is running...");
 }
