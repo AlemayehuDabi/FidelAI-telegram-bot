@@ -17,7 +17,6 @@ export const setupStartUi = (bot: Telegraf) => {
                     ])
                 }
             )
-
         }
     ),
 
@@ -27,6 +26,5 @@ export const setupStartUi = (bot: Telegraf) => {
         await ctx.answerCbQuery()
         await ctx.reply(`You selected Grade ${selected}.`)
     })
-
 }
 
