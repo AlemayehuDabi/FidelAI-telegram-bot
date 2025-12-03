@@ -1,6 +1,6 @@
 import { Telegraf } from "telegraf";
 import { gradeMenu } from "../keyboards/gradeMenu";
-import { Grade, subjectMenu } from "../keyboards/subjectMenu";
+import { Grade, subjectMenu, subjectsAfterStream } from "../keyboards/subjectMenu";
 import { topicMenu } from "../keyboards/topicMenu";
 import { renderMenu } from "./renderer";
 
@@ -14,10 +14,25 @@ export const setupStartUI = (bot: Telegraf) => {
   bot.action(/grade_.+/, async (ctx) => {
     console.log("grade selection",ctx.match);
     const grade = Number(ctx.match[0].split("_")[1]) as Grade;
+    console.log("this is selected grade:", grade);
     await ctx.answerCbQuery();
 
     return renderMenu(ctx, `📘 Grade ${grade}\nSelect your subject:`, subjectMenu(grade));
   });
+
+  bot.action(/^stream_(\d+)_(natural|social)$/, async(ctx) => {
+  const grade = Number(ctx.match[1]) as 11 | 12;
+  const stream = ctx.match[2] as "natural" | "social";
+
+  console.log("stream selection", ctx.match);
+  await ctx.answerCbQuery();
+
+  return renderMenu(ctx,
+    `You selected ${stream === "natural" ? "🌿 Natural" : "🏛 Social"} Science stream (Grade ${grade})` +
+    `\n\nChoose a subject:`,
+    subjectsAfterStream(grade, stream)
+  );
+});
 
   // --- subject selected ---
   bot.action(/subject_.+/, async (ctx) => {
