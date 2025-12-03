@@ -5,6 +5,45 @@ import { topicMenu } from "../keyboards/topicMenu";
 import { renderMenu } from "./renderer";
 import llm from "../llm_call/llm_call";
 
+// Telegram message limit is 4096 characters
+const MAX_MESSAGE_LENGTH = 4096;
+
+/**
+ * Splits a long message into chunks that fit within Telegram's message limit
+ * Tries to split at paragraph boundaries when possible
+ */
+function splitMessage(text: string, maxLength: number = MAX_MESSAGE_LENGTH): string[] {
+  if (text.length <= maxLength) {
+    return [text];
+  }
+
+  const chunks: string[] = [];
+  let remaining = text;
+
+  while (remaining.length > maxLength) {
+    // Try to split at a paragraph break (double newline) first
+    const paragraphBreak = remaining.lastIndexOf('\n\n', maxLength);
+    // If no paragraph break, try single newline
+    const lineBreak = remaining.lastIndexOf('\n', maxLength);
+    // If no line break, split at word boundary
+    const wordBreak = remaining.lastIndexOf(' ', maxLength);
+    
+    let splitIndex = paragraphBreak > maxLength * 0.5 ? paragraphBreak 
+                   : lineBreak > maxLength * 0.5 ? lineBreak
+                   : wordBreak > maxLength * 0.5 ? wordBreak
+                   : maxLength;
+
+    chunks.push(remaining.substring(0, splitIndex).trim());
+    remaining = remaining.substring(splitIndex).trim();
+  }
+
+  if (remaining.length > 0) {
+    chunks.push(remaining);
+  }
+
+  return chunks;
+}
+
 export const setupStartUI = (bot: Telegraf) => {
   // --- /start command ---
   bot.start(async (ctx) => {
@@ -88,13 +127,30 @@ export const setupStartUI = (bot: Telegraf) => {
       ? response.content 
       : "No explanation generated.";
 
+    const header = `✨ <b>${topic}</b> – ${subject} (Grade ${grade})\n\n`;
+    const fullMessage = header + text;
+    
+    // Split message into chunks if it's too long
+    const chunks = splitMessage(fullMessage, MAX_MESSAGE_LENGTH);
+    
+    // Ensure we have at least one chunk
+    if (chunks.length === 0) {
+      throw new Error("Failed to split message");
+    }
+    
+    // Edit the loading message with the first chunk
     await ctx.telegram.editMessageText(
       ctx.chat!.id,
       loadingMsg.message_id,
       undefined,
-      `✨ <b>${topic}</b> – ${subject} (Grade ${grade})\n\n${text}`,
+      `<b>${chunks[0]!}</b>`,
       { parse_mode: "HTML" }
     );
+
+    // Send remaining chunks as new messages
+    for (let i = 1; i < chunks.length; i++) {
+      await ctx.reply(`<b>${chunks[i]!}</b>`, { parse_mode: "HTML" });
+    }
 
   } catch (error: any) {
     console.error("LLM failed:", error);
@@ -104,6 +160,14 @@ export const setupStartUI = (bot: Telegraf) => {
     // Handle the specific Abort/Timeout error
     if (error.name === "AbortError" || error.name === "TimeoutError") {
       userMessage = "⚠️ The AI is taking too long to respond. Please try again in a few seconds.";
+    }
+    // Handle API key/model not found errors
+    else if (error.message?.includes("404") || error.message?.includes("not found")) {
+      userMessage = "❌ AI service configuration error. Please contact the bot administrator.\n\n(API key may need Generative Language API enabled in Google Cloud Console)";
+    }
+    // Handle authentication errors
+    else if (error.message?.includes("401") || error.message?.includes("403") || error.message?.includes("API key")) {
+      userMessage = "❌ AI service authentication error. Please contact the bot administrator.\n\n(API key may be invalid or missing permissions)";
     }
 
     // Wrap this in a try/catch too, in case the message was deleted by the user
