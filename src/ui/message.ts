@@ -3,6 +3,7 @@ import { gradeMenu } from "../keyboards/gradeMenu";
 import { Grade, subjectMenu, subjectsAfterStream } from "../keyboards/subjectMenu";
 import { topicMenu } from "../keyboards/topicMenu";
 import { renderMenu } from "./renderer";
+import llm from "../llm_call/llm_call";
 
 export const setupStartUI = (bot: Telegraf) => {
   // --- /start command ---
@@ -51,20 +52,73 @@ export const setupStartUI = (bot: Telegraf) => {
   });
 
   // --- topic selected ---
-  bot.action(/topic_.+/, async (ctx) => {
-    const parts = ctx.match[0].split("_");
-    const grade = parts[1];
-    const subject = parts[2];
-    const topic = parts.slice(3).join("_");
+ bot.action(/topic_.+/, async (ctx) => {
+  const parts = ctx.match[0].split("_");
+  const grade = parts[1];
+  const subject = parts[2];
+  const topic = parts.slice(3).join(" ");
 
-    await ctx.answerCbQuery();
+  console.log("Topic selected:", { grade, subject, topic });
 
-    await ctx.reply(
-      `✨ <b>${topic}</b> in <b>${subject}</b> (Grade ${grade})\n\n` +
-        `This is where the AI explanation will come.`,
+  // Remove loading spinner instantly
+  await ctx.answerCbQuery("Generating explanation... ⚡");
+
+  // Show a temporary message so user knows it's working
+  const loadingMsg = await ctx.reply(
+    `🔄 Generating explanation for <b>${topic}</b> (${subject}, Grade ${grade})...\nThis can take 10–30 seconds.`,
+    { parse_mode: "HTML" }
+  );
+
+  
+  try {
+    const prompt = `Give a clear, detailed, and student-friendly explanation of "${topic}" in ${subject} for Grade ${grade} (Ethiopian curriculum). Use simple language, examples, and short paragraphs.`;
+
+    // 1. Create a logic to abort the request if it takes too long (e.g., 25 seconds)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000); 
+
+    // 2. Pass the signal to the invoke call
+    const response = await llm.invoke(prompt, {
+      signal: controller.signal,
+    });
+    
+    clearTimeout(timeoutId); // Clear timer if successful
+
+    const text = typeof response.content === "string" 
+      ? response.content 
+      : "No explanation generated.";
+
+    await ctx.telegram.editMessageText(
+      ctx.chat!.id,
+      loadingMsg.message_id,
+      undefined,
+      `✨ <b>${topic}</b> – ${subject} (Grade ${grade})\n\n${text}`,
       { parse_mode: "HTML" }
     );
-  });
+
+  } catch (error: any) {
+    console.error("LLM failed:", error);
+
+    let userMessage = "Sorry, I couldn't generate the explanation right now. Please try again.";
+
+    // Handle the specific Abort/Timeout error
+    if (error.name === "AbortError" || error.name === "TimeoutError") {
+      userMessage = "⚠️ The AI is taking too long to respond. Please try again in a few seconds.";
+    }
+
+    // Wrap this in a try/catch too, in case the message was deleted by the user
+    try {
+      await ctx.telegram.editMessageText(
+        ctx.chat!.id,
+        loadingMsg.message_id,
+        undefined,
+        userMessage
+      );
+    } catch (e) {
+      console.log("Could not update error message (user might have blocked bot or deleted chat)");
+    }
+  }
+});
 
   // --- Navigation ---
   bot.action("nav_home", async (ctx) => {
