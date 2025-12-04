@@ -143,13 +143,13 @@ export const setupStartUI = (bot: Telegraf) => {
       ctx.chat!.id,
       loadingMsg.message_id,
       undefined,
-      `<b>${chunks[0]!}</b>`,
+      `${chunks[0]!}`,
       { parse_mode: "HTML" }
     );
 
     // Send remaining chunks as new messages
     for (let i = 1; i < chunks.length; i++) {
-      await ctx.reply(`<b>${chunks[i]!}</b>`, { parse_mode: "HTML" });
+      await ctx.reply(`${chunks[i]!}`, { parse_mode: "HTML" });
     }
 
   } catch (error: any) {

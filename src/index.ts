@@ -11,7 +11,7 @@ const bootStrap = async() => {
 
 bootStrap()
 
-// signal interupt for control c
+// signal interupt for control C in the terminal
 process.once("SIGINT", () => {
     console.log("terminal stoped")
     bot.stop("SIGINT")
