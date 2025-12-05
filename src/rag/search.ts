@@ -32,7 +32,7 @@ export async function search(query: string, ctx: any, loadingMsg: any, topK = 5)
     ctx.chat!.id,
     loadingMsg.message_id,
     undefined,
-    "Semantic Search....",
+    "Reading the Book...",
     { parse_mode: "HTML" }
   );
 
@@ -57,6 +57,8 @@ export async function search(query: string, ctx: any, loadingMsg: any, topK = 5)
   const queryVector: number[] = Array.from(
     output.data ? output.data : output[0].data ?? output[0]
   );
+
+  console.log({output, queryVector})
 
   // Atlas Vector Search pipeline
   const results = await collection
