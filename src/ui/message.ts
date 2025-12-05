@@ -4,6 +4,8 @@ import { Grade, subjectMenu, subjectsAfterStream } from "../keyboards/subjectMen
 import { topicMenu } from "../keyboards/topicMenu";
 import { renderMenu } from "./renderer";
 import llm from "../llm_call/llm_call";
+import { search } from "../rag/search";
+import { ExplainPrompt } from "../prompt/createPrompt";
 
 // Telegram message limit is 4096 characters
 const MAX_MESSAGE_LENGTH = 4096;
@@ -110,11 +112,29 @@ export const setupStartUI = (bot: Telegraf) => {
 
   
   try {
-    const prompt = `Give a clear, detailed, and student-friendly explanation of "${topic}" in ${subject} for Grade ${grade} (Ethiopian curriculum). Use simple language, examples, and short paragraphs.`;
+
+    const relevantChunks = await search(topic)
+    // 2. Combine chunks into context (with length safety)
+    const context = relevantChunks.join("\n\n").trim();
+
+    console.log("relevant chunk context: ", context)
+
+    // Optional: truncate if context is too long, to be safe
+    const maxContextLength = 50_000; // characters
+    const truncatedContext = context.slice(0, maxContextLength);
+
+    console.log("relevant truncated chunk context: ", truncatedContext)
+
+
+    const prompt = ExplainPrompt(topic, subject, grade, truncatedContext)
 
     // 1. Create a logic to abort the request if it takes too long (e.g., 25 seconds)
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 25000); 
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
+
+
+
+    
 
     // 2. Pass the signal to the invoke call
     const response = await llm.invoke(prompt, {

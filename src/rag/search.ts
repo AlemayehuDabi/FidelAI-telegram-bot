@@ -20,7 +20,7 @@ async function getEmbedder() {
 
 const client = new MongoClient(process.env.MONGODB_URI!);
 
-async function search(query: string, topK = 5): Promise<string[]> {
+export async function search(query: string, topK = 5): Promise<string[]> {
   await client.connect();
   const db = client.db();
   const collection = db.collection("chunks");
@@ -42,6 +42,7 @@ async function search(query: string, topK = 5): Promise<string[]> {
           path: "embedding",
           queryVector: queryVector,
           limit: topK,
+          numCandidates: 100
         },
       },
       {
