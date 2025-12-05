@@ -9,9 +9,14 @@ const TOPICS: Record<string, string[]> = {
   English: ["Grammar", "Writing", "Vocabulary"],
 };
 
+/**
+ * Organizes topics in a clean, mobile-friendly layout
+ * Single column for better readability on small screens
+ */
 export const topicMenu = (grade: number, subject: string) => {
   const topics = TOPICS[subject] || [];
 
+  // Single column layout for topics - easier to read and tap
   const buttons = topics.map((topic) => [
     Markup.button.callback(`📖 ${topic}`, `topic_${grade}_${subject}_${topic}`)
   ]);

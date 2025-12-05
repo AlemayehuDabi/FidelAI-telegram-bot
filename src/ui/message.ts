@@ -62,7 +62,7 @@ function splitMessage(text: string, maxLength: number = MAX_MESSAGE_LENGTH): str
  * Send post-explanation menu after an explanation or question response
  */
 async function sendPostExplanationMenu(ctx: any) {
-  await ctx.reply("What would you like to do next?", {
+  await ctx.reply("✨ <b>What would you like to explore next?</b>\n\nChoose an option below to continue learning:", {
     parse_mode: "HTML",
     ...postExplanationMenu,
   });
@@ -74,7 +74,7 @@ export const setupStartUI = (bot: Telegraf) => {
     clearUserState(ctx.from!.id);
     return renderMenu(
       ctx,
-      "👋 Welcome to Fidel — Your AI Tutor!\n\nWhat would you like to do?",
+      "👋 <b>Welcome to Fidel — Your AI Learning Companion!</b>\n\n✨ Get instant explanations, practice questions, and personalized help for any topic.\n\nWhat would you like to do?",
       mainMenu
     );
   });
@@ -86,7 +86,7 @@ export const setupStartUI = (bot: Telegraf) => {
     pushNavigation(ctx.from!.id, "main", {});
     return renderMenu(
       ctx,
-      "🧠 Explain Mode\n\nChoose your grade:",
+      "🎓 <b>Start Learning</b>\n\nSelect your grade to begin:",
       gradeMenu
     );
   });
@@ -95,8 +95,8 @@ export const setupStartUI = (bot: Telegraf) => {
     await ctx.answerCbQuery();
     setUserState(ctx.from!.id, { mode: "question", waitingForQuestion: true });
     await ctx.reply(
-      "❓ <b>I Have a Question</b>\n\n" +
-      "Please type your question below. I'll do my best to help you understand! 💡",
+      "💬 <b>Ask Your Question</b>\n\n" +
+      "Type your question below and I'll help you understand! 💡\n\n<i>You can ask about any topic, concept, or problem you're working on.</i>",
       { parse_mode: "HTML" }
     );
   });
@@ -111,7 +111,7 @@ export const setupStartUI = (bot: Telegraf) => {
     setUserState(ctx.from!.id, { grade });
     pushNavigation(ctx.from!.id, "grade", { grade });
 
-    return renderMenu(ctx, `📘 Grade ${grade}\nSelect your subject:`, subjectMenu(grade));
+    return renderMenu(ctx, `📘 <b>Grade ${grade}</b>\n\nSelect your subject:`, subjectMenu(grade));
   });
 
   bot.action(/^stream_(\d+)_(natural|social)$/, async (ctx) => {
@@ -126,8 +126,7 @@ export const setupStartUI = (bot: Telegraf) => {
 
     return renderMenu(
       ctx,
-      `You selected ${stream === "natural" ? "🌿 Natural" : "🏛 Social"} Science stream (Grade ${grade})` +
-        `\n\nChoose a subject:`,
+      `✅ <b>${stream === "natural" ? "🌿 Natural" : "🏛 Social"} Science Stream</b> (Grade ${grade})\n\nChoose a subject to explore:`,
       subjectsAfterStream(grade, stream)
     );
   });
@@ -146,7 +145,7 @@ export const setupStartUI = (bot: Telegraf) => {
 
     return renderMenu(
       ctx,
-      `📚 ${subject}\nChoose a topic:`,
+      `📚 <b>${subject}</b>\n\nSelect a topic to learn about:`,
       topicMenu(Number(grade), subject)
     );
   });
@@ -165,7 +164,7 @@ export const setupStartUI = (bot: Telegraf) => {
 
     // Show a temporary message so user knows it's working
     const loadingMsg = await ctx.reply(
-      `🔄 Generating explanation for <b>${topic}</b> (${subject}, Grade ${grade})...\nThis can take 10–30 seconds.`,
+      `✨ <b>Generating explanation for ${topic}</b>\n\n📚 ${subject} • Grade ${grade}\n\n⚡ This may take 10–30 seconds...`,
       { parse_mode: "HTML" }
     );
 
@@ -205,7 +204,7 @@ export const setupStartUI = (bot: Telegraf) => {
         ? response.content
         : "No explanation generated.";
 
-      const header = `✨ <b>${topic}</b> – ${subject} (Grade ${grade})\n\n`;
+      const header = `📖 <b>${topic}</b>\n\n📚 ${subject} • Grade ${grade}\n\n${"─".repeat(25)}\n\n`;
       const fullMessage = header + text;
 
       // Save explanation to state
@@ -288,7 +287,7 @@ export const setupStartUI = (bot: Telegraf) => {
     if (state.waitingForQuestion && text) {
       setUserState(userId, { waitingForQuestion: false });
 
-      const loadingMsg = await ctx.reply("🤔 Thinking about your question...", {
+      const loadingMsg = await ctx.reply("💭 <b>Analyzing your question...</b>\n\n✨ Finding the best way to help you understand!", {
         parse_mode: "HTML",
       });
 
@@ -322,7 +321,7 @@ export const setupStartUI = (bot: Telegraf) => {
           ctx.chat!.id,
           loadingMsg.message_id,
           undefined,
-          `❓ <b>Your Question:</b> ${text}\n\n💡 <b>Answer:</b>\n\n${answer}`,
+          `💬 <b>Your Question:</b>\n${text}\n\n${"─".repeat(25)}\n\n✨ <b>Answer:</b>\n\n${answer}`,
           { parse_mode: "HTML" }
         );
 
@@ -365,7 +364,7 @@ export const setupStartUI = (bot: Telegraf) => {
       return ctx.reply("❌ No explanation found to summarize. Please generate an explanation first.");
     }
 
-    const loadingMsg = await ctx.reply("📖 Creating lesson summary...", { parse_mode: "HTML" });
+    const loadingMsg = await ctx.reply("📝 <b>Creating your lesson summary...</b>\n\n✨ Condensing the key points for quick review!", { parse_mode: "HTML" });
 
     try {
       const prompt = SummaryPrompt(state.lastExplanation);
@@ -409,7 +408,7 @@ export const setupStartUI = (bot: Telegraf) => {
       return ctx.reply("❌ No topic found. Please select a topic first.");
     }
 
-    const loadingMsg = await ctx.reply("🧑 Generating practice questions...", { parse_mode: "HTML" });
+    const loadingMsg = await ctx.reply("✏️ <b>Generating practice questions...</b>\n\n🎯 Creating questions to test your understanding!", { parse_mode: "HTML" });
 
     try {
       // Get context from RAG
@@ -514,7 +513,7 @@ export const setupStartUI = (bot: Telegraf) => {
       return ctx.reply("❌ No topic found. Please select a topic first.");
     }
 
-    const loadingMsg = await ctx.reply("🎥 Searching for educational videos...", { parse_mode: "HTML" });
+    const loadingMsg = await ctx.reply("🎥 <b>Finding educational videos...</b>\n\n🔍 Searching for the best tutorials to help you learn!", { parse_mode: "HTML" });
 
     try {
       // Generate search query using LLM
@@ -580,7 +579,7 @@ export const setupStartUI = (bot: Telegraf) => {
       return ctx.reply("❌ No topic found. Please select a topic first.");
     }
 
-    const loadingMsg = await ctx.reply("🖼️ Generating AI image explanation...", { parse_mode: "HTML" });
+    const loadingMsg = await ctx.reply("🖼️ <b>Creating AI visual explanation...</b>\n\n🎨 Generating an image to help you visualize the concept!", { parse_mode: "HTML" });
 
     try {
       // Generate image prompt using LLM
@@ -659,8 +658,8 @@ export const setupStartUI = (bot: Telegraf) => {
     await ctx.answerCbQuery();
     setUserState(ctx.from!.id, { waitingForQuestion: true });
     await ctx.reply(
-      "❓ <b>I Have a Question</b>\n\n" +
-      "Please type your question below. I'll do my best to help you understand! 💡",
+      "💬 <b>Ask Your Question</b>\n\n" +
+      "Type your question below and I'll help you understand! 💡\n\n<i>You can ask about any topic, concept, or problem you're working on.</i>",
       { parse_mode: "HTML" }
     );
   });
@@ -671,7 +670,7 @@ export const setupStartUI = (bot: Telegraf) => {
     clearUserState(ctx.from!.id);
     return renderMenu(
       ctx,
-      "👋 Welcome to Fidel — Your AI Tutor!\n\nWhat would you like to do?",
+      "👋 <b>Welcome to Fidel — Your AI Learning Companion!</b>\n\n✨ Get instant explanations, practice questions, and personalized help for any topic.\n\nWhat would you like to do?",
       mainMenu
     );
   });
@@ -684,7 +683,7 @@ export const setupStartUI = (bot: Telegraf) => {
     if (!navItem) {
       return renderMenu(
         ctx,
-        "👋 Welcome to Fidel — Your AI Tutor!\n\nWhat would you like to do?",
+        "👋 <b>Welcome to Fidel — Your AI Learning Companion!</b>\n\n✨ Get instant explanations, practice questions, and personalized help for any topic.\n\nWhat would you like to do?",
         mainMenu
       );
     }
@@ -697,7 +696,7 @@ export const setupStartUI = (bot: Telegraf) => {
         if (navItem.data.subject && navItem.data.grade) {
           return renderMenu(
             ctx,
-            `📚 ${navItem.data.subject}\nChoose a topic:`,
+            `📚 <b>${navItem.data.subject}</b>\n\nSelect a topic to learn about:`,
             topicMenu(Number(navItem.data.grade), navItem.data.subject)
           );
         }
@@ -708,7 +707,7 @@ export const setupStartUI = (bot: Telegraf) => {
           setUserState(userId, { grade: navItem.data.grade });
           return renderMenu(
             ctx,
-            `📘 Grade ${navItem.data.grade}\nSelect your subject:`,
+            `📘 <b>Grade ${navItem.data.grade}</b>\n\nSelect your subject:`,
             subjectMenu(navItem.data.grade as Grade)
           );
         }
@@ -718,7 +717,7 @@ export const setupStartUI = (bot: Telegraf) => {
         if (navItem.data.grade) {
           return renderMenu(
             ctx,
-            `📘 Grade ${navItem.data.grade}\nSelect your subject:`,
+            `📘 <b>Grade ${navItem.data.grade}</b>\n\nSelect your subject:`,
             subjectMenu(navItem.data.grade as Grade)
           );
         }
@@ -728,7 +727,7 @@ export const setupStartUI = (bot: Telegraf) => {
       default:
         return renderMenu(
           ctx,
-          "👋 Welcome to Fidel — Your AI Tutor!\n\nWhat would you like to do?",
+          "👋 <b>Welcome to Fidel — Your AI Learning Companion!</b>\n\n✨ Get instant explanations, practice questions, and personalized help for any topic.\n\nWhat would you like to do?",
           mainMenu
         );
     }
@@ -736,7 +735,7 @@ export const setupStartUI = (bot: Telegraf) => {
     // Fallback to main menu
     return renderMenu(
       ctx,
-      "👋 Welcome to Fidel — Your AI Tutor!\n\nWhat would you like to do?",
+      "👋 <b>Welcome to Fidel — Your AI Learning Companion!</b>\n\n✨ Get instant explanations, practice questions, and personalized help for any topic.\n\nWhat would you like to do?",
       mainMenu
     );
   });
