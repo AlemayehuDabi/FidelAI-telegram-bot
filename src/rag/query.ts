@@ -4,6 +4,16 @@ import { cosineSim } from './utilis';
 import dotenv from 'dotenv';
 dotenv.config();
 
+interface BookEmbedding {
+  bookId: string;
+  text: string;
+  start: number;
+  end: number;
+  embedding: number[];
+  chunkIndex: number;
+  createdAt: Date | FirebaseFirestore.Timestamp;
+}
+
 /**
  * Simple retrieval:
  * 1) embed query
@@ -20,11 +30,15 @@ export async function retrieveContext(bookId: string, query: string, topK = 4) {
     .where('bookId', '==', bookId)
     .get();
 
-  const docs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+  console.log('W/out The Type - Snapshot:', snapshot.docs.map((d) => d.data()));
+
+  const docs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() as BookEmbedding }));
+
   const scored = docs.map((d) => ({
     ...d,
     score: cosineSim(qEmb, d.embedding),
   }));
+
   scored.sort((a, b) => b.score - a.score);
 
   const top = scored.slice(0, topK);
