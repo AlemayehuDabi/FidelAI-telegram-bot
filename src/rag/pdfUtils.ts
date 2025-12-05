@@ -4,7 +4,8 @@ import { PDFParse } from 'pdf-parse';
 export async function extractTextFromPdf(path: string): Promise<string> {
   const data = await fs.readFile(path);
   const parsed = new PDFParse({data});
-  return await parsed.getText(); // single big string
+  const result = await parsed.getText(); // single big string
+  return result.text;
 }
 
 /**
