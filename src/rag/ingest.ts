@@ -6,6 +6,7 @@ import { Storage } from '@google-cloud/storage';
 import dotenv from 'dotenv';
 dotenv.config();
 
+
 const storage = new Storage();
 const BUCKET = process.env.GCS_BUCKET!; // must exist
 
@@ -48,9 +49,9 @@ export async function ingestPdf(localPdfPath: string, bookId: string) {
       const docRef = firestore.collection(EMBEDDINGS_COLLECTION).doc();
       batch.set(docRef, {
         bookId,
-        text: group[j].text,
-        start: group[j].start,
-        end: group[j].end,
+        text: group[j]?.text,
+        start: group[j]?.start,
+        end: group[j]?.end,
         embedding: embeddings[j], // array of numbers
         chunkIndex: i + j,
         createdAt: new Date(),
