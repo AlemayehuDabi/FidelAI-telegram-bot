@@ -3,7 +3,7 @@ import path from "path";
 import { ingestPdf } from "./ingest";
 
 async function ingestAllBooks() {
-  const booksDir = path.resolve(process.cwd(), "../../assets/books");
+  const booksDir = path.resolve(process.cwd(), "./src/assets/books");
 
   const files = await fs.readdir(booksDir);
 

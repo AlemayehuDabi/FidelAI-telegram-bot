@@ -5,8 +5,8 @@ export type Grade = 9 | 10 | 11 | 12;
 
 // Subjects for grades 9–10 (no stream)
 const commonSubjects: Record<9 | 10, string[]> = {
-  9: ["Mathematics", "Physics", "Biology", "Chemistry", "English"],
-  10: ["Mathematics", "Physics", "Civics", "ICT", "English"],
+  9: ["Amharic","Mathematics", "Physics", "Biology", "Chemistry", "English", "ICT", "Citizenship Education", "Economics", "History", "Geography"],
+  10: ["Amharic","Mathematics", "Physics", "Biology", "Chemistry", "English", "ICT", "Citizenship Education", "Economics", "Geography", "History"],
 };
 
 // Streams for 11–12

@@ -2,24 +2,9 @@ import path from 'path';
 import firestore, { EMBEDDINGS_COLLECTION } from './firestoreClient';
 import { extractTextFromPdf, chunkText } from './pdfUtils';
 import { embedTexts } from './vertexClient';
-import { Storage } from '@google-cloud/storage';
+import { uploadFileToGcs } from './gcsStorage';
 import dotenv from 'dotenv';
 dotenv.config();
-
-
-const storage = new Storage();
-const BUCKET = process.env.GCS_BUCKET!; // must exist
-
-async function uploadPdfToGcs(localPath: string, destName: string) {
-  await storage.bucket(BUCKET).upload(localPath, {
-    destination: destName,
-    resumable: false,
-    metadata: {
-      cacheControl: 'public, max-age=31536000',
-    },
-  });
-  return `gs://${BUCKET}/${destName}`;
-}
 
 export async function ingestPdf(localPdfPath: string, bookId: string) {
   console.log('Extracting text...');
@@ -27,13 +12,15 @@ export async function ingestPdf(localPdfPath: string, bookId: string) {
   console.log('Chunking...');
   const chunks = chunkText(text, 3000, 300);
 
-  console.log(`Uploading PDF to Cloud Storage (bucket=${BUCKET})...`);
-  const gcsPath = await uploadPdfToGcs(localPdfPath, `${bookId}.pdf`);
+  console.log('Uploading PDF to GCS...');
+  const objectName = `${bookId}.pdf`;
+  const gcsPath = await uploadFileToGcs(localPdfPath, objectName);
 
-  // Save book metadata
+  // Save book metadata in Firestore
   await firestore.collection('books').doc(bookId).set({
     bookId,
     gcsPath,
+    objectName,
     numChunks: chunks.length,
     ingestedAt: new Date(),
   });
