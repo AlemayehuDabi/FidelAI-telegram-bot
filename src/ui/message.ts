@@ -112,8 +112,7 @@ export const setupStartUI = (bot: Telegraf) => {
 
   
   try {
-
-    const relevantChunks = await search(topic)
+    const relevantChunks = await search(topic, ctx, loadingMsg)
     // 2. Combine chunks into context (with length safety)
     const context = relevantChunks.join("\n\n").trim();
 

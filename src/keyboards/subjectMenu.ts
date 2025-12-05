@@ -16,7 +16,7 @@ const streamSubjects: Record<11 | 12, { natural: string[]; social: string[] }> =
     social:  ["Mathematics", "Geography", "History", "Civics", "Economics", "English"],
   },
   12: {
-    natural: ["Mathematics", "Physics", "Chemistry", "Biology", "English"],
+    natural: ["Mathematics", "Physics", "Chemistry", "Biology", "English", "Technical Drawing"],
     social:  ["Mathematics", "Geography", "History", "Economics", "Civics", "English"],
   },
 };
